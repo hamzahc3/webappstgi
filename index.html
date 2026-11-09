@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Threadlight: chat with document intelligence</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap">
+<style>
+:root{--side:#f3f1fb;--side2:#e7e3f7;--sidetx:#3b3556;--bg:#faf9fd;--panel:#fff;--tx:#1d1a2b;--mut:#756f8c;--line:#e6e3f0;--acc:#5b3fd0;--accbg:#ece8fb;--amb:#b45309;--ambbg:#fef0dc;--me:#ece8fb;--sans:"Instrument Sans",system-ui,sans-serif;--serif:"Instrument Sans",system-ui,sans-serif;color-scheme:light}
+@media not all{:root:not([data-theme="light"]){--side:#0d1626;--side2:#182740;--bg:#111826;--panel:#172033;--tx:#e6ebf2;--mut:#8f9db2;--line:#26324a;--acc:#4fc1c1;--accbg:#173a3f;--amb:#e7ad45;--ambbg:#3a2f17;--me:#1b2d3d;color-scheme:dark}}
+:root[data-theme="never"]{--side:#0d1626;--side2:#182740;--bg:#111826;--panel:#172033;--tx:#e6ebf2;--mut:#8f9db2;--line:#26324a;--acc:#4fc1c1;--accbg:#173a3f;--amb:#e7ad45;--ambbg:#3a2f17;--me:#1b2d3d;color-scheme:dark}
+*{box-sizing:border-box}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html,body{height:100%;margin:0}
+body{font:14px/1.45 var(--sans);background:var(--bg);color:var(--tx);background-color:var(--bg)}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+#app{display:grid;grid-template-columns:240px 1fr 380px;height:100%}
+#app.noai{grid-template-columns:240px 1fr 0}
+aside.nav{background:var(--side);color:var(--sidetx);padding:14px 10px;overflow:auto;border-right:1px solid var(--line)}
+.ws{font-weight:600;font-size:17px;color:var(--tx);padding:2px 8px 14px}
+.grp{font-size:12px;color:var(--mut);padding:12px 8px 4px;font-weight:600}
+.nav button.ch{display:flex;width:100%;gap:8px;align-items:center;background:none;border:0;color:inherit;padding:7px 12px;border-radius:999px;text-align:left}
+.nav button.ch:hover{background:var(--side2)}
+.nav button.ch.on{background:var(--accbg);color:var(--acc);font-weight:600}
+.nav .badge{margin-left:auto;background:var(--amb);color:#111;border-radius:9px;font-size:11px;padding:0 6px;font-weight:600}
+.dot{width:8px;height:8px;border-radius:50%;background:#52c28a;flex:none}.dot.off{background:#64748b}
+main{display:flex;flex-direction:column;min-width:0;background:var(--panel)}
+.top{display:flex;align-items:center;gap:10px;padding:14px 20px;border-bottom:1px solid var(--line)}
+.top h2{margin:0;font-size:16px}.top .tp{color:var(--mut);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.btn{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:6px 14px}
+.btn:hover{border-color:var(--acc)}
+.btn.pri{background:var(--acc);border-color:var(--acc);color:#fff}
+#msgs{flex:1;overflow:auto;padding:12px 16px}
+.m{display:flex;gap:12px;padding:10px 12px;border-radius:14px}.m:hover{background:var(--bg)}
+.m.flash{background:var(--ambbg)}
+.av{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:600;flex:none}
+.m .h{font-weight:600}.m .t{color:var(--mut);font-size:12px;margin-left:6px;font-weight:400}
+.m p{margin:2px 0 0;white-space:pre-wrap;overflow-wrap:anywhere}
+.file{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin-top:6px;max-width:380px;background:var(--bg)}
+.file b{display:block}.file small{color:var(--mut)}
+.st{margin-left:auto;font-size:12px;border-radius:9px;padding:1px 8px;background:var(--ambbg);color:var(--amb);white-space:nowrap}
+.st.ready{background:var(--accbg);color:var(--acc)}
+.bar{height:3px;background:var(--line);border-radius:2px;margin-top:5px;overflow:hidden}.bar i{display:block;height:100%;background:var(--acc);transition:width .4s}
+.comp{padding:10px 16px 14px;border-top:1px solid var(--line)}
+.box{border:1px solid var(--line);border-radius:16px;background:var(--panel);box-shadow:0 2px 8px rgba(60,40,120,.07)}
+.tools{display:flex;gap:4px;padding:4px 6px;border-bottom:1px solid var(--line)}
+.tools button{border:0;background:none;border-radius:5px;padding:2px 8px;color:var(--mut)}
+.tools button:hover{background:var(--line);color:var(--tx)}
+#ed{min-height:44px;max-height:140px;overflow:auto;padding:8px 10px;outline:0}
+#ed:empty::before{content:attr(data-ph);color:var(--mut)}
+.send{display:flex;justify-content:space-between;align-items:center;padding:4px 8px 6px}
+.send small{color:var(--mut)}
+section.ai{border-left:1px solid var(--line);background:var(--bg);display:flex;flex-direction:column;min-width:0;overflow:hidden}
+.tabs{display:flex;border-bottom:1px solid var(--line);background:var(--panel)}
+.tabs button{flex:1;border:0;background:none;padding:11px 6px;border-bottom:2px solid transparent;color:var(--mut);font-weight:500}
+.tabs button.on{color:var(--tx);border-color:var(--acc)}
+.pane{flex:1;overflow:auto;padding:14px}
+.f{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.f label{display:grid;gap:3px;color:var(--mut);font-size:12px}
+.f select,.f input{border:1px solid var(--line);border-radius:6px;padding:5px 6px;background:var(--panel);min-width:0}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;margin-top:12px;box-shadow:0 2px 8px rgba(60,40,120,.06)}
+.card h4{margin:0 0 6px;font-size:15px;font-weight:600}
+.card ul{margin:4px 0 8px;padding-left:18px}.card li{margin:3px 0}
+.cite{display:inline-block;border:1px solid var(--amb);background:var(--ambbg);color:var(--amb);border-radius:5px;padding:0 6px;font-size:12px;font-weight:600;margin:0 1px}
+.cite:hover{background:var(--amb);color:#111}
+.ans{font-size:14px;line-height:1.55;margin:0 0 8px}
+.src{border-left:3px solid var(--amb);padding:2px 0 2px 10px;margin:8px 0;color:var(--mut);font-size:13px}
+.empty{color:var(--mut);padding:18px 4px}
+#viewer{position:absolute;inset:0 0 0 auto;width:min(380px,100%);background:var(--panel);border-left:1px solid var(--line);display:none;flex-direction:column;z-index:5}
+#viewer.open{display:flex}
+.page{margin:14px;background:#fff;color:#222;border:1px solid var(--line);padding:22px;font-family:Georgia,serif;font-size:15px;line-height:1.6;flex:1;overflow:auto}
+.page mark{background:#ffe08a;color:#222;padding:1px 0}
+.vh{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line)}.vh b{flex:1}
+.mob{display:none}
+@media (max-width:900px){#app,#app.noai{grid-template-columns:1fr}aside.nav{display:none}section.ai{position:fixed;inset:0;z-index:4;display:none}#app:not(.noai) section.ai{display:flex}.mob{display:inline-block}}
+</style>
+</head>
+<body>
+<div id="app">
+  <aside class="nav" id="nav"></aside>
+  <main>
+    <div class="top"><h2 id="chName"></h2><span class="tp" id="chTopic"></span>
+      <button class="btn" id="theme" hidden>Theme</button>
+      <button class="btn pri" id="toggleAI">Catch me up</button></div>
+    <div id="msgs" aria-live="polite"></div>
+    <div class="comp"><div class="box">
+      <div class="tools"><button data-c="bold"><b>B</b></button><button data-c="italic"><i>I</i></button><button data-c="insertUnorderedList">List</button><button id="attach">Attach PDF</button></div>
+      <div id="ed" contenteditable="true" role="textbox" data-ph="Write a message. Enter sends, Shift+Enter adds a line."></div>
+      <div class="send"><small id="hint">Attached PDFs are parsed in the background.</small><button class="btn pri" id="send">Send</button></div>
+    </div><input type="file" id="file" accept="application/pdf" hidden></div>
+  </main>
+  <section class="ai" id="ai" style="position:relative">
+    <div class="tabs"><button class="on" data-t="sum">Catch me up</button><button data-t="ask">Ask documents</button></div>
+    <div class="pane" id="pSum"></div>
+    <div class="pane" id="pAsk" hidden></div>
+    <div id="viewer"><div class="vh"><b id="vTitle"></b><button class="btn" id="vClose">Close</button></div><div class="page" id="vPage"></div></div>
+  </section>
+</div>
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const users={me:{n:'You',c:'#1c7c7d'},ana:{n:'Ana Ruiz',c:'#8a5cc2'},marco:{n:'Marco Bell',c:'#c2603a'},li:{n:'Li Wei',c:'#3b6fc2'}};
+const chans=[{id:'general',n:'general',k:'c',t:'Company-wide announcements'},{id:'q3',n:'q3-planning',k:'c',t:'Q3 report review and next steps'},{id:'news',n:'newsroom',k:'c',t:'Clippings and market news'},{id:'dm-ana',n:'Ana Ruiz',k:'d',u:'ana',t:'Direct message'},{id:'dm-marco',n:'Marco Bell',k:'d',u:'marco',t:'Direct message'}];
+const T=(d,h,m)=>new Date(2026,10,d,h,m).getTime();
+let nid=1;const M=id=>msgs.push({id:nid++,...id});
+const msgs=[];
+[['general','ana',T(5,9,2),'Welcome to the new workspace. Say hi and join your team channels.'],
+['q3','ana',T(6,10,15),'I uploaded the Q3 report. Churn is the headline issue this quarter.',{doc:'d1'}],
+['q3','marco',T(6,10,40),'Churn rose to 4.8% in the SMB segment. We should decide on the pricing experiment.'],
+['q3','li',T(6,11,5),'Decision: we run the annual-plan discount test in December, owner Marco.'],
+['q3','ana',T(7,9,30),'Action item: Li drafts the customer survey by Friday. #churn'],
+['q3','marco',T(8,14,10),'Open question: do we include enterprise accounts in the pricing test?'],
+['news','li',T(7,16,0),'Reuters piece on energy costs hitting software budgets.',{doc:'d2'}],
+['news','marco',T(8,8,45),'Worth reading page 2 before the board call. #market'],
+['dm-ana','ana',T(8,17,0),'Can you review the survey draft tomorrow?']].forEach(([c,u,t,x,o])=>M({ch:c,u,t,text:x,...(o||{})}));
+const docs={d1:{name:'Q3_report.pdf',type:'report',date:T(6,10,15),by:'ana',status:'ready',pages:['Q3 Report. Executive summary. Revenue grew 12% quarter over quarter, led by enterprise contracts and stronger renewals.','Customer health. SMB churn rose to 4.8% from 3.1% in Q2. Exit surveys cite price sensitivity and onboarding friction as the main drivers of churn.','Recommendations. Run an annual-plan discount experiment, redesign onboarding and review pricing tiers before Q1 planning.']},
+d2:{name:'Reuters_energy_costs.pdf',type:'news',date:T(7,16,0),by:'li',status:'ready',pages:['Energy costs squeeze tech. Rising electricity prices are lifting cloud bills for mid-sized software companies.','Analysts expect software budgets to tighten in the first quarter. Vendors may respond with usage-based pricing and discounts for annual commitments.']}};
+let cur='q3',unread={general:0,q3:3,news:1,'dm-ana':1,'dm-marco':0};
+
+function nav(){const row=c=>`<button class="ch ${c.id===cur?'on':''}" data-id="${c.id}">${c.k==='c'?'#':`<span class="dot ${c.u==='marco'?'off':''}"></span>`} ${esc(c.n)}${unread[c.id]?`<span class="badge">${unread[c.id]}</span>`:''}</button>`;
+$('#nav').innerHTML=`<div class="ws">Threadlight</div><div class="grp">Channels</div>${chans.filter(c=>c.k==='c').map(row).join('')}<div class="grp">Direct messages</div>${chans.filter(c=>c.k==='d').map(row).join('')}`;
+$('#nav').querySelectorAll('.ch').forEach(b=>b.onclick=()=>{cur=b.dataset.id;unread[cur]=0;render()})}
+const ft=t=>new Date(t).toLocaleString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+function msgHTML(m){const u=users[m.u],d=m.doc&&docs[m.doc];
+return `<div class="m" id="m${m.id}"><div class="av" style="background:${u.c}">${u.n[0]}</div><div style="min-width:0"><span class="h">${u.n}</span><span class="t">${ft(m.t)}</span><p>${m.html??esc(m.text)}</p>${d?`<div class="file"><span>📄</span><div><b>${esc(d.name)}</b><small>${d.pages.length} pages</small>${d.status!=='ready'?`<div class="bar"><i style="width:${d.prog||5}%"></i></div>`:''}</div><span class="st ${d.status}">${d.status==='ready'?'Ready to search':d.label||'Queued'}</span></div>`:''}</div></div>`}
+function render(){nav();const c=chans.find(x=>x.id===cur);$('#chName').textContent=(c.k==='c'?'# ':'')+c.n;$('#chTopic').textContent=c.t;
+$('#msgs').innerHTML=msgs.filter(m=>m.ch===cur).map(msgHTML).join('');$('#msgs').scrollTop=1e9;fillFilters()}
+function send(html,text,doc){const u='me';M({ch:cur,u,t:Date.now(),text,html,doc});render()}
+$('#send').onclick=()=>{const t=$('#ed').innerText.trim();if(!t)return;send($('#ed').innerHTML,t);$('#ed').innerHTML=''};
+$('#ed').onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();$('#send').click()}};
+document.querySelectorAll('.tools [data-c]').forEach(b=>b.onclick=()=>{document.execCommand(b.dataset.c);$('#ed').focus()});
+$('#attach').onclick=()=>$('#file').click();
+$('#file').onchange=e=>{const f=e.target.files[0];if(!f)return;const id='u'+Date.now();
+docs[id]={name:f.name,type:'pdf',date:Date.now(),by:'me',status:'processing',label:'Uploading',prog:10,pages:['Page text will appear here after server-side parsing. (Prototype: no real parsing in the browser.)','Your uploaded document would be chunked and embedded here.']};
+send('','',id);const steps=[['Parsing',35],['Chunking',60],['Embedding',85]];let i=0;
+const iv=setInterval(()=>{const d=docs[id];if(i<steps.length){d.label=steps[i][0];d.prog=steps[i][1];i++}else{d.status='ready';clearInterval(iv)}render()},900);e.target.value=''};
+/* ---------- AI panel ---------- */
+const people=['ana','marco','li'];
+function fillFilters(){}
+$('#pSum').innerHTML=`<div class="f"><label>Range<select id="sRange"><option value="unread">Since last read</option><option value="all">Whole channel</option><option value="last3">Last 3 messages</option></select></label>
+<label>Participant<select id="sWho"><option value="">Everyone</option>${people.map(p=>`<option value="${p}">${users[p].n}</option>`).join('')}</select></label>
+<label>Topic tag<input id="sTag" placeholder="e.g. churn"></label>
+<label>From date<input id="sFrom" type="date"></label></div>
+<button class="btn pri" id="sGo" style="width:100%">Summarize this channel</button><div id="sOut"><p class="empty">Pick a range and filters, then summarize. Every point links back to its source message.</p></div>`;
+$('#pAsk').innerHTML=`<div class="f"><label>Document type<select id="aType"><option value="">All types</option><option value="report">Report</option><option value="news">News</option><option value="pdf">Other PDF</option></select></label>
+<label>Uploaded by<select id="aWho"><option value="">Anyone</option>${['ana','li','me'].map(p=>`<option value="${p}">${users[p].n}</option>`).join('')}</select></label>
+<label>From date<input id="aFrom" type="date"></label><label>Scope<select id="aScope"><option value="">All my channels</option><option value="here">This channel only</option></select></label></div>
+<div style="display:flex;gap:6px"><input id="aQ" placeholder="Ask about your documents" style="flex:1;border:1px solid var(--line);border-radius:7px;padding:7px;background:var(--panel)"><button class="btn pri" id="aGo">Ask</button></div><div id="aOut"><p class="empty">Try: “Why did churn go up?” or “What happens to software budgets?”</p></div>`;
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x===b));$('#pSum').hidden=b.dataset.t!=='sum';$('#pAsk').hidden=b.dataset.t!=='ask'});
+$('#toggleAI').onclick=()=>$('#app').classList.toggle('noai');
+const clip=(s,n)=>s.length>n?s.slice(0,n-1)+'…':s;
+$('#sGo').onclick=()=>{let list=msgs.filter(m=>m.ch===cur&&m.text);const r=$('#sRange').value,w=$('#sWho').value,tg=$('#sTag').value.trim().toLowerCase(),fr=$('#sFrom').value;
+if(r==='unread'){const n=unread[cur]||list.length;list=list.slice(-Math.max(n,3))}if(r==='last3')list=list.slice(-3);
+if(w)list=list.filter(m=>m.u===w);if(tg)list=list.filter(m=>m.text.toLowerCase().includes(tg));if(fr)list=list.filter(m=>m.t>=new Date(fr).getTime());
+if(!list.length){$('#sOut').innerHTML='<p class="empty">No messages match these filters. Widen the range or clear a filter.</p>';return}
+const L=k=>list.filter(m=>new RegExp(k,'i').test(m.text)),ref=a=>a.map(m=>`<a class="cite" href="#m${m.id}" data-j="${m.id}">msg ${m.id}</a>`).join('');
+const dec=L('decision'),act=L('action item'),q=L('\\?|open question'),dd=[...new Set(list.map(m=>m.doc).filter(Boolean))];
+const sec=(t,a,f)=>a.length?`<b>${t}</b><ul>${a.map(m=>`<li>${esc(f(m))} ${ref([m])}</li>`).join('')}</ul>`:'';
+$('#sOut').innerHTML=`<div class="card"><h4>${list.length} messages from ${new Set(list.map(m=>users[m.u].n)).size} people</h4>
+<p class="ans">${esc(clip(list[0].text,110))} Latest: ${esc(clip(list[list.length-1].text,90))} ${ref([list[0],list[list.length-1]])}</p>
+${sec('Decisions',dec,m=>m.text.replace(/^Decision: /,''))}${sec('Action items',act,m=>m.text.replace(/^Action item: /,''))}${sec('Open questions',q,m=>m.text.replace(/^Open question: /,''))}
+${dd.length?`<b>Documents discussed</b><ul>${dd.map(d=>`<li>${esc(docs[d].name)}: ${esc(clip(docs[d].pages[0],80))} <a class="cite" href="#" data-d="${d}" data-p="1">p.1</a></li>`).join('')}</ul>`:''}</div>`;
+bindCites($('#sOut'))};
+function bindCites(root){root.querySelectorAll('[data-j]').forEach(a=>a.onclick=e=>{e.preventDefault();const m=msgs.find(x=>x.id==a.dataset.j);if(m.ch!==cur){cur=m.ch;render()}const el=$('#m'+m.id);el.scrollIntoView({block:'center'});el.classList.add('flash');setTimeout(()=>el.classList.remove('flash'),1800)});
+root.querySelectorAll('[data-d]').forEach(a=>a.onclick=e=>{e.preventDefault();openDoc(a.dataset.d,+a.dataset.p,a.dataset.h)})}
+const stop=new Set('the a an of to in is was why what did do and for on how are it this that about up go'.split(' '));
+const words=s=>s.toLowerCase().match(/[a-z0-9%.]+/g)?.filter(w=>!stop.has(w))||[];
+$('#aGo').onclick=()=>{const q=$('#aQ').value.trim();if(!q)return;const ty=$('#aType').value,w=$('#aWho').value,fr=$('#aFrom').value,sc=$('#aScope').value,qw=words(q);
+const chunks=[];Object.entries(docs).forEach(([id,d])=>{if(d.status!=='ready')return;if(ty&&d.type!==ty)return;if(w&&d.by!==w)return;if(fr&&d.date<new Date(fr).getTime())return;
+if(sc==='here'&&!msgs.some(m=>m.doc===id&&m.ch===cur))return;d.pages.forEach((p,i)=>{const pw=new Set(words(p));const s=qw.filter(x=>pw.has(x)||[...pw].some(y=>y.startsWith(x.slice(0,5))&&x.length>4)).length;if(s)chunks.push({id,page:i+1,text:p,s})})});
+chunks.sort((a,b)=>b.s-a.s);const top=chunks.slice(0,2);
+if(!top.length){$('#aOut').innerHTML='<p class="empty">No passages found with these filters. Try different words or loosen the filters.</p>';return}
+const c=(k)=>`<a class="cite" href="#" data-d="${k.id}" data-p="${k.page}" data-h="1">${esc(docs[k.id].name.split('.')[0])} p.${k.page}</a>`;
+$('#aOut').innerHTML=`<div class="card"><p class="ans">${esc(clip(top[0].text.split('. ').slice(1).join('. ')||top[0].text,260))} ${c(top[0])}</p>
+${top.map(k=>`<div class="src">${esc(clip(k.text,150))}<br>${c(k)}</div>`).join('')}<small style="color:var(--mut)">Prototype retrieval: keyword overlap. Production uses hybrid vector + full-text search with reranking.</small></div>`;bindCites($('#aOut'))};
+$('#aQ').onkeydown=e=>{if(e.key==='Enter')$('#aGo').click()};
+function openDoc(id,p,h){const d=docs[id];$('#vTitle').textContent=d.name+' · page '+p;let t=esc(d.pages[p-1]);if(h){const ws=words($('#aQ').value);t=t.split('. ').map(s=>ws.some(w=>s.toLowerCase().includes(w))?`<mark>${s}</mark>`:s).join('. ')}$('#vPage').innerHTML=t;$('#viewer').classList.add('open')}
+$('#vClose').onclick=()=>$('#viewer').classList.remove('open');
+$('#theme').onclick=()=>{const r=document.documentElement,d=r.dataset.theme?r.dataset.theme==='dark':matchMedia('(prefers-color-scheme:dark)').matches;r.dataset.theme=d?'light':'dark'};
+render();
+</script>
+</body>
+</html>
